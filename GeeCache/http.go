@@ -12,7 +12,7 @@ type HTTPPool struct {
 	bashPath string
 }
 
-var defaultBasePath string = "/_geecache"
+var defaultBasePath string = "/_geecache/"
 
 func NewHTTPPool(self string) *HTTPPool {
 	return &HTTPPool{
@@ -26,6 +26,7 @@ func NewHTTPPool(self string) *HTTPPool {
 // 建立ServeHTTP服务，和日志服务
 
 // v这里是一个slice，包含任意类型的元素
+
 func (p *HTTPPool) Log(format string, v ...interface{}) {
 	log.Printf("[Server %s] %s", p.self, fmt.Sprintf(format, v...))
 }
@@ -35,7 +36,7 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, p.bashPath) {
 		panic("HTTPPool serving unexpected path: " + r.URL.Path)
 	}
-	p.Log("%s% s", r.Method, r.URL.Path)
+	p.Log("%s%s", r.Method, r.URL.Path)
 	// 处理输入
 	parts := strings.SplitN(r.URL.Path[len(p.bashPath):], "/", 2)
 	if len(parts) != 2 {
@@ -44,9 +45,10 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 进入缓存读取数据
-	fmt.Println(parts)
+
 	groupName := parts[0]
 	key := parts[1]
+	fmt.Println(parts, "--", groupName, "--", key, "--", len(parts))
 
 	group := GetGroup(groupName)
 	if group == nil {
