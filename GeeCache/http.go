@@ -1,23 +1,43 @@
 package geecache
 
 import (
+	"Gee/GeeCache/consistenthash"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type HTTPPool struct {
-	self     string
-	bashPath string
+	self        string
+	bashPath    string
+	mu          sync.Mutex
+	peers       *consistenthash.Map
+	httpGetters map[string]*httpGetter
 }
 
 var defaultBasePath string = "/_geecache/"
 
-func NewHTTPPool(self string) *HTTPPool {
+func NewHTTPPool(self string, replicas int, fn consistenthash.Hash) *HTTPPool {
 	return &HTTPPool{
-		self:     self,
-		bashPath: defaultBasePath,
+		self:        self,
+		bashPath:    defaultBasePath,
+		peers:       consistenthash.New(replicas, fn),
+		httpGetters: make(map[string]*httpGetter),
+	}
+}
+
+func (p *HTTPPool) Set(peers ...string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	// 新建一个哈希
+	p.peers = consistenthash.New(defaultReplicas, nil)
+	p.peers.Add(peers...)
+	// 信息录入
+	for _, peer := range peers {
+		p.httpGetters[peer] = &httpGetter{baseUrl: peer + p.bashPath}
+		fmt.Println(peer, p.bashPath)
 	}
 }
 
